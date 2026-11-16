@@ -2,15 +2,41 @@ import { XEON_DEFAULTS, calculateXeonYield } from './calc.js';
 
 const STORAGE_KEY = 'xeon-yield-state-v1';
 const THEME_KEY = 'xeon-yield-theme-v1';
+const SYNC_META_KEY = 'xeon-yield-sync-meta-v1';
 const ECB_ESTR_API =
   'https://data-api.ecb.europa.eu/service/data/EST/B.EU000A2X2A25.WT?lastNObservations=1&format=jsondata';
+const ESTR_DEV_API = 'https://api.estr.dev/latest';
+const AUTO_SYNC_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 const el = (id) => document.getElementById(id);
 
 let state = loadState();
+let syncMeta = loadSyncMeta();
 let lastResult = null;
 let deferredInstallPrompt = null;
 let toastTimer = null;
+
+function loadSyncMeta() {
+  try {
+    const raw = localStorage.getItem(SYNC_META_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // Ignore malformed sync metadata
+  }
+  return {
+    lastSyncedAt: 0,
+    lastSyncedRate: XEON_DEFAULTS.estrRatePct,
+    sourceLabel: 'Ref',
+  };
+}
+
+function saveSyncMeta() {
+  try {
+    localStorage.setItem(SYNC_META_KEY, JSON.stringify(syncMeta));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
 
 function loadState() {
   try {
@@ -427,47 +453,95 @@ function renderChart(res) {
   container.onpointerleave = hideInspect;
 }
 
-// Live ECB €STR Sync
-async function syncEcbEstr() {
-  const topBtn = el('btn-sync-estr-top');
-  const syncBtn = el('btn-sync-ecb');
-  topBtn.classList.add('is-loading');
-  syncBtn.textContent = 'Syncing…';
-
+async function fetchJsonWithTimeout(url, timeoutMs = 5000) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5500);
-
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(ECB_ESTR_API, {
+    const res = await fetch(url, {
       headers: { Accept: 'application/json' },
+      cache: 'no-store',
       signal: controller.signal,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
+    return await res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
+async function fetchLiveEstrFromApis() {
+  // 1. Primary: Official ECB Data API (SDMX-JSON)
+  try {
+    const data = await fetchJsonWithTimeout(ECB_ESTR_API);
     const seriesObj = data?.dataSets?.[0]?.series;
     const firstKey = seriesObj ? Object.keys(seriesObj)[0] : null;
     const obsObj = firstKey ? seriesObj[firstKey]?.observations : null;
     const obsKey = obsObj ? Object.keys(obsObj)[0] : null;
     const rateVal = obsKey ? Number(obsObj[obsKey]?.[0]) : NaN;
-
     const timeValues = data?.structure?.dimensions?.observation?.[0]?.values;
-    const obsDate = timeValues?.[0]?.id || 'latest';
+    const obsDate = timeValues?.[0]?.id || new Date().toISOString().slice(0, 10);
 
-    if (!Number.isFinite(rateVal)) {
-      throw new Error('Unexpected ECB response format');
+    if (Number.isFinite(rateVal)) {
+      return {
+        ratePct: Number(rateVal.toFixed(3)),
+        date: obsDate,
+        sourceLabel: 'ECB Live',
+      };
+    }
+  } catch {
+    // Fall through to secondary endpoint
+  }
+
+  // 2. Fallback: api.estr.dev (CORS-friendly JSON mirror of ECB €STR)
+  const fallback = await fetchJsonWithTimeout(ESTR_DEV_API);
+  const rateVal = Number(fallback?.value);
+  if (!Number.isFinite(rateVal)) {
+    throw new Error('Invalid €STR API response');
+  }
+  return {
+    ratePct: Number(rateVal.toFixed(3)),
+    date: fallback?.date || new Date().toISOString().slice(0, 10),
+    sourceLabel: 'ECB · estr.dev',
+  };
+}
+
+// Live ECB €STR Sync
+async function syncEcbEstr({ silent = false, respectManualOverride = false } = {}) {
+  const topBtn = el('btn-sync-estr-top');
+  const syncBtn = el('btn-sync-ecb');
+  topBtn.classList.add('is-loading');
+  if (!silent) syncBtn.textContent = 'Syncing…';
+
+  try {
+    const live = await fetchLiveEstrFromApis();
+    const wasUsingSyncedOrDefault =
+      Math.abs(Number(state.estrRatePct) - Number(syncMeta.lastSyncedRate)) < 0.001 ||
+      Math.abs(Number(state.estrRatePct) - Number(XEON_DEFAULTS.estrRatePct)) < 0.001;
+
+    syncMeta = {
+      lastSyncedAt: Date.now(),
+      lastSyncedRate: live.ratePct,
+      sourceLabel: live.sourceLabel,
+    };
+    saveSyncMeta();
+
+    if (!respectManualOverride || wasUsingSyncedOrDefault) {
+      state.estrRatePct = live.ratePct;
+      state.estrDate = live.date;
+      syncInputsFromState();
+      recalculateAndRender();
+    } else {
+      el('rate-source-badge').textContent = `${live.sourceLabel} · ${live.date}`;
     }
 
-    state.estrRatePct = Number(rateVal.toFixed(3));
-    state.estrDate = obsDate;
-    syncInputsFromState();
-    recalculateAndRender();
-
-    showToast(`Synced live ECB €STR: ${state.estrRatePct.toFixed(3)}% (${obsDate})`);
+    if (!silent) {
+      showToast(`Synced live €STR: ${live.ratePct.toFixed(3)}% (${live.date})`);
+    }
   } catch {
-    showToast(`Offline or ECB unreachable — using €STR ${Number(state.estrRatePct).toFixed(3)}%`);
+    if (!silent) {
+      showToast(`Offline or API unreachable — using €STR ${Number(state.estrRatePct).toFixed(3)}%`);
+    }
   } finally {
-    clearTimeout(timeout);
     topBtn.classList.remove('is-loading');
     syncBtn.textContent = 'Sync Live ECB';
   }
@@ -783,3 +857,7 @@ syncInputsFromState();
 bindEvents();
 recalculateAndRender();
 initPwa();
+
+if (navigator.onLine && Date.now() - (syncMeta.lastSyncedAt || 0) > AUTO_SYNC_TTL_MS) {
+  syncEcbEstr({ silent: true, respectManualOverride: true });
+}
