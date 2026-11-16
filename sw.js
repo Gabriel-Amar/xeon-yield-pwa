@@ -1,4 +1,4 @@
-const CACHE_NAME = 'xeon-yield-pwa-v1';
+const CACHE_NAME = 'xeon-yield-pwa-v2';
 const APP_SHELL_ASSETS = [
   './',
   './index.html',
@@ -39,12 +39,10 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // Let external API requests (e.g. ECB €STR) go straight to network
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Navigation requests: network-first with cached app shell fallback
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -58,7 +56,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static app shell assets: cache-first, revalidate in background
   event.respondWith(
     caches.match(request).then((cached) => {
       const fetchPromise = fetch(request)

@@ -1,60 +1,64 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="auto">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>XEON Yield — EUR Overnight Rate ETF Estimator</title>
-  <meta name="description" content="Android-ready Progressive Web App to estimate net and gross daily-compounded yields for Xtrackers II EUR Overnight Rate Swap UCITS ETF (XEON | LU0290358497)." />
+  <title>XEON / EUR — ETF Yield Estimator</title>
+  <meta name="description" content="Clean XEON ETF daily-compounded yield estimator with live ECB €STR sync, rate trajectories, tax presets, and growth charts." />
 
   <!-- PWA & Android Chrome Metadata -->
   <link rel="manifest" href="./manifest.webmanifest" />
-  <meta name="theme-color" content="#0E3527" media="(prefers-color-scheme: dark)" />
-  <meta name="theme-color" content="#F5F7F6" media="(prefers-color-scheme: light)" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="XEON Yield" />
+  <meta name="apple-mobile-web-app-title" content="XEON / EUR" />
+  <meta name="theme-color" content="#0b0e11" id="meta-theme-color" />
 
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
   <link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png" />
 
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <!-- Top App Bar -->
-    <header class="app-header">
-      <div class="header-brand">
-        <img src="./icons/icon-192.png" alt="XEON Yield logo" class="brand-icon" width="32" height="32" />
-        <div class="brand-text">
-          <h1 class="app-title">XEON Yield</h1>
-          <span class="app-subtitle">LU0290358497 · €STR +8.5 bps</span>
+  <div class="app">
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">€X</div>
+        <div class="brand-copy">
+          <h1>XEON / EUR</h1>
+          <span class="brand-sub mono">LU0290358497</span>
         </div>
       </div>
 
-      <div class="header-actions">
-        <button id="btn-sync-estr-top" class="rate-chip" type="button" title="Sync latest ECB €STR rate">
-          <span class="rate-chip-label">€STR</span>
-          <span id="header-estr-value" class="rate-chip-val">2.437%</span>
+      <div class="topbar-actions">
+        <button id="btn-sync-estr-top" class="icon-btn" type="button" aria-label="Sync live ECB €STR rate" title="Sync live ECB €STR">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+            <path d="M16 16h5v5" />
+          </svg>
         </button>
 
-        <button id="btn-theme-toggle" class="icon-btn" type="button" aria-label="Toggle color theme" title="Toggle light/dark theme">
-          <svg id="icon-sun" class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <button id="btn-theme-toggle" class="icon-btn" type="button" aria-label="Toggle color theme" title="Toggle dark/light theme">
+          <svg id="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="4"></circle>
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
           </svg>
-          <svg id="icon-moon" class="svg-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg id="icon-moon" class="hidden" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
           </svg>
         </button>
 
-        <button id="btn-open-settings" class="icon-btn" type="button" aria-label="Open ETF and fee settings" title="ETF & Fee Settings">
-          <svg class="svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <button id="btn-open-settings" class="icon-btn" type="button" aria-label="Open ETF and cost parameters" title="ETF & Cost Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
@@ -62,265 +66,284 @@
       </div>
     </header>
 
-    <!-- Android PWA Install Prompt Banner (shown when installable) -->
+    <!-- Android PWA Install Banner -->
     <div id="install-banner" class="install-banner hidden" role="region" aria-label="Install Android App">
-      <div class="install-banner-info">
-        <span class="install-banner-title">Install XEON Yield on Android</span>
-        <span class="install-banner-sub">Works offline · Home screen shortcut</span>
+      <div class="install-banner-copy">
+        <strong>Install XEON / EUR</strong>
+        <span>Standalone Android PWA · Works offline</span>
       </div>
       <div class="install-banner-actions">
-        <button id="btn-install-dismiss" class="btn-ghost-sm" type="button">Later</button>
-        <button id="btn-install-pwa" class="btn-primary-sm" type="button">Install</button>
+        <button id="btn-install-dismiss" class="btn btn-sm" type="button">Later</button>
+        <button id="btn-install-pwa" class="btn btn-primary btn-sm" type="button">Install</button>
       </div>
     </div>
 
-    <!-- Main Scrollable Content -->
-    <main class="app-main">
-      <!-- TAB 1: ESTIMATE -->
-      <section id="panel-estimate" class="tab-panel active" aria-labelledby="nav-estimate">
-        <!-- Hero Output Summary -->
-        <div class="hero-card">
-          <div class="hero-top-row">
-            <span class="hero-eyebrow">Estimated Net Value</span>
-            <span id="hero-horizon-badge" class="hero-meta-badge">365 days · Nov 16, 2027</span>
-          </div>
-
-          <div class="hero-amount-row">
-            <span id="res-net-value" class="hero-amount">€10,248.72</span>
-            <span id="res-net-profit" class="hero-delta positive">+€248.72</span>
-          </div>
-
-          <div class="hero-metrics-grid">
-            <div class="metric-cell">
-              <span class="metric-label">Net APY</span>
-              <span id="res-net-apy" class="metric-val accent">2.49%</span>
-            </div>
-            <div class="metric-cell">
-              <span class="metric-label">Pre-Tax APY</span>
-              <span id="res-gross-apy" class="metric-val">2.49%</span>
-            </div>
-            <div class="metric-cell">
-              <span class="metric-label">Monthly Avg</span>
-              <span id="res-monthly-avg" class="metric-val">+€20.73</span>
-            </div>
-            <div class="metric-cell">
-              <span class="metric-label">Daily Avg</span>
-              <span id="res-daily-avg" class="metric-val">+€0.68</span>
-            </div>
-          </div>
+    <!-- Hero Summary Grid (2 Cards matching EuroYen layout) -->
+    <section class="hero-grid" aria-label="Summary">
+      <!-- 1. Reference Rate Card -->
+      <article class="hero-card">
+        <div class="hero-head">
+          <span class="eyebrow">XEON Reference Rate</span>
+          <span class="badge accent" id="rate-source-badge">ECB · 2026-11-13</span>
         </div>
-
-        <!-- Capital & Recurring PAC Input Card -->
-        <div class="panel-card">
-          <div class="field-group">
-            <div class="field-header">
-              <label for="input-initial" class="field-label">Initial Investment</label>
-              <span id="label-total-invested" class="field-hint">Principal: €10,000</span>
-            </div>
-            <div class="input-wrapper">
-              <span class="input-prefix">€</span>
-              <input id="input-initial" type="number" inputmode="decimal" min="0" step="100" value="10000" aria-label="Initial investment in EUR" />
-            </div>
-            <div class="chip-row" id="chips-initial" role="group" aria-label="Initial investment presets">
-              <button type="button" class="chip" data-val="1000">€1k</button>
-              <button type="button" class="chip" data-val="5000">€5k</button>
-              <button type="button" class="chip active" data-val="10000">€10k</button>
-              <button type="button" class="chip" data-val="25000">€25k</button>
-              <button type="button" class="chip" data-val="50000">€50k</button>
-              <button type="button" class="chip" data-val="100000">€100k</button>
-            </div>
-          </div>
-
-          <div class="divider"></div>
-
-          <div class="field-group">
-            <div class="field-header">
-              <label for="input-monthly" class="field-label">Monthly Contribution (PAC)</label>
-              <span class="field-hint">Optional recurring</span>
-            </div>
-            <div class="input-wrapper">
-              <span class="input-prefix">€</span>
-              <input id="input-monthly" type="number" inputmode="decimal" min="0" step="50" value="0" aria-label="Monthly contribution in EUR" />
-            </div>
-            <div class="chip-row" id="chips-monthly" role="group" aria-label="Monthly contribution presets">
-              <button type="button" class="chip active" data-val="0">€0</button>
-              <button type="button" class="chip" data-val="100">+€100</button>
-              <button type="button" class="chip" data-val="250">+€250</button>
-              <button type="button" class="chip" data-val="500">+€500</button>
-              <button type="button" class="chip" data-val="1000">+€1k</button>
-            </div>
-          </div>
+        <div class="rate-display">
+          <span class="rate-prefix">€STR =</span>
+          <span class="hero-number" id="hero-estr-val">2.437</span>
+          <span class="hero-unit">%</span>
         </div>
-
-        <!-- Holding Horizon Card -->
-        <div class="panel-card">
-          <div class="field-header">
-            <span class="field-label">Holding Horizon</span>
-            <span id="horizon-summary-text" class="field-hint">1 Year</span>
-          </div>
-
-          <div class="chip-row" id="chips-horizon" role="group" aria-label="Horizon quick presets">
-            <button type="button" class="chip" data-val="1" data-unit="months">1M</button>
-            <button type="button" class="chip" data-val="3" data-unit="months">3M</button>
-            <button type="button" class="chip" data-val="6" data-unit="months">6M</button>
-            <button type="button" class="chip active" data-val="1" data-unit="years">1Y</button>
-            <button type="button" class="chip" data-val="2" data-unit="years">2Y</button>
-            <button type="button" class="chip" data-val="3" data-unit="years">3Y</button>
-            <button type="button" class="chip" data-val="5" data-unit="years">5Y</button>
-          </div>
-
-          <div class="custom-horizon-row">
-            <div class="input-wrapper compact">
-              <input id="input-horizon-val" type="number" inputmode="numeric" min="1" max="3650" value="1" aria-label="Custom horizon duration" />
-            </div>
-            <div class="segmented-control" id="horizon-unit-group" role="group" aria-label="Horizon time unit">
-              <button type="button" class="seg-btn" data-unit="days">Days</button>
-              <button type="button" class="seg-btn" data-unit="months">Months</button>
-              <button type="button" class="seg-btn active" data-unit="years">Years</button>
-            </div>
-          </div>
+        <div class="hero-meta">
+          <span>Pre-Tax APY: <strong class="mono" id="res-gross-apy">2.49%</strong></span>
+          <span class="mono" id="hero-spread-meta">+8.5 bps − 0.10% TER</span>
         </div>
+      </article>
 
-        <!-- ECB €STR Rate & Trajectory Card -->
-        <div class="panel-card">
-          <div class="field-header">
-            <label for="input-estr" class="field-label">ECB €STR Rate (%)</label>
-            <button id="btn-sync-ecb" class="text-action-btn" type="button">
-              <span id="sync-status-dot" class="status-dot"></span>
-              <span id="sync-status-label">Sync live ECB</span>
-            </button>
+      <!-- 2. Estimated Net Yield Card -->
+      <article class="hero-card">
+        <div class="hero-head">
+          <span class="eyebrow">Estimated Net Profit</span>
+          <span class="badge positive" id="hero-roi-badge">+2.49%</span>
+        </div>
+        <div class="rate-display">
+          <span class="hero-number positive" id="res-net-profit">+€248.72</span>
+        </div>
+        <div class="meta-row">
+          <div class="meta-item">
+            <span class="meta-label">Final Value</span>
+            <span class="meta-val" id="res-net-value">€10,248.72</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Invested</span>
+            <span class="meta-val" id="label-total-invested">€10,000</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Net APY</span>
+            <span class="meta-val" id="res-net-apy">2.49%</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Daily Avg</span>
+            <span class="meta-val" id="res-daily-avg">+€0.68</span>
+          </div>
+          <span class="badge inline-cta mono" id="hero-horizon-badge">365d · Nov 16, 2027</span>
+        </div>
+      </article>
+    </section>
+
+    <!-- Desktop Segmented Nav -->
+    <nav class="seg-nav" aria-label="Sections">
+      <button type="button" class="seg-btn active" data-tab="estimate">Estimate</button>
+      <button type="button" class="seg-btn" data-tab="projection">Chart &amp; Compare</button>
+      <button type="button" class="seg-btn" data-tab="info">Schedule &amp; Info</button>
+    </nav>
+
+    <!-- Tab 1: Estimate -->
+    <section class="panel active" id="panel-estimate">
+      <div class="stack">
+        <!-- Capital & PAC Card -->
+        <div class="card">
+          <div class="card-top">
+            <div>
+              <span class="eyebrow">Capital &amp; Horizon</span>
+              <div class="card-sub" id="horizon-summary-text">1 Year · Monthly avg <strong class="mono" id="res-monthly-avg">+€20.73</strong></div>
+            </div>
+            <div class="tf-group" id="chips-horizon" role="group" aria-label="Horizon quick presets">
+              <button type="button" class="tf-btn" data-val="1" data-unit="months">1M</button>
+              <button type="button" class="tf-btn" data-val="3" data-unit="months">3M</button>
+              <button type="button" class="tf-btn" data-val="6" data-unit="months">6M</button>
+              <button type="button" class="tf-btn active" data-val="1" data-unit="years">1Y</button>
+              <button type="button" class="tf-btn" data-val="2" data-unit="years">2Y</button>
+              <button type="button" class="tf-btn" data-val="5" data-unit="years">5Y</button>
+            </div>
           </div>
 
-          <div class="rate-control-row">
-            <button id="btn-estr-minus" class="stepper-btn" type="button" aria-label="Decrease €STR by 25 bps">-25 bps</button>
-            <div class="input-wrapper center">
-              <input id="input-estr" type="number" inputmode="decimal" min="-1" max="10" step="0.001" value="2.437" aria-label="ECB ESTR rate percentage" />
-              <span class="input-suffix">%</span>
-            </div>
-            <button id="btn-estr-plus" class="stepper-btn" type="button" aria-label="Increase €STR by 25 bps">+25 bps</button>
-          </div>
-
-          <input id="slider-estr" class="range-slider" type="range" min="0" max="6" step="0.025" value="2.437" aria-label="ECB ESTR rate slider" />
-
-          <div class="trajectory-row">
-            <span class="sub-label">Rate Path</span>
-            <div class="segmented-control" id="trajectory-group" role="group" aria-label="Rate trajectory mode">
-              <button type="button" class="seg-btn active" data-mode="flat">Flat €STR</button>
-              <button type="button" class="seg-btn" data-mode="linear">Gradual Shift</button>
-            </div>
-          </div>
-
-          <div id="target-estr-box" class="target-estr-box hidden">
-            <div class="field-header">
-              <label for="input-target-estr" class="sub-label">Target €STR at End of Horizon</label>
-              <span id="target-estr-delta" class="field-hint">2.000%</span>
-            </div>
-            <div class="rate-control-row">
-              <button id="btn-target-minus" class="stepper-btn" type="button">-25 bps</button>
-              <div class="input-wrapper center">
-                <input id="input-target-estr" type="number" inputmode="decimal" min="-1" max="10" step="0.05" value="2.00" aria-label="Target ESTR rate at maturity" />
-                <span class="input-suffix">%</span>
+          <div class="controls-grid">
+            <div class="control-block">
+              <div class="control-head">
+                <label for="input-initial" class="eyebrow">Initial Investment</label>
+                <div class="sim-rate-input-wrap">
+                  <span>€</span>
+                  <input id="input-initial" type="number" inputmode="decimal" min="0" step="100" value="10000" aria-label="Initial investment in EUR" />
+                </div>
               </div>
-              <button id="btn-target-plus" class="stepper-btn" type="button">+25 bps</button>
+              <div class="preset-row" id="chips-initial" role="group" aria-label="Initial investment presets">
+                <button type="button" class="chip-btn" data-val="1000">€1k</button>
+                <button type="button" class="chip-btn" data-val="5000">€5k</button>
+                <button type="button" class="chip-btn active" data-val="10000">€10k</button>
+                <button type="button" class="chip-btn" data-val="25000">€25k</button>
+                <button type="button" class="chip-btn" data-val="50000">€50k</button>
+                <button type="button" class="chip-btn" data-val="100000">€100k</button>
+              </div>
+            </div>
+
+            <div class="control-block">
+              <div class="control-head">
+                <label for="input-monthly" class="eyebrow">Monthly PAC</label>
+                <div class="sim-rate-input-wrap">
+                  <span>€</span>
+                  <input id="input-monthly" type="number" inputmode="decimal" min="0" step="50" value="0" aria-label="Monthly PAC contribution in EUR" />
+                </div>
+              </div>
+              <div class="preset-row" id="chips-monthly" role="group" aria-label="Monthly contribution presets">
+                <button type="button" class="chip-btn active" data-val="0">€0</button>
+                <button type="button" class="chip-btn" data-val="100">+€100</button>
+                <button type="button" class="chip-btn" data-val="250">+€250</button>
+                <button type="button" class="chip-btn" data-val="500">+€500</button>
+                <button type="button" class="chip-btn" data-val="1000">+€1k</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="custom-horizon-bar">
+            <span class="eyebrow">Custom Duration</span>
+            <div class="custom-horizon-controls">
+              <div class="sim-rate-input-wrap compact">
+                <input id="input-horizon-val" type="number" inputmode="numeric" min="1" max="3650" value="1" aria-label="Custom horizon value" />
+              </div>
+              <div class="tf-group" id="horizon-unit-group" role="group" aria-label="Horizon unit">
+                <button type="button" class="tf-btn" data-unit="days">Days</button>
+                <button type="button" class="tf-btn" data-unit="months">Months</button>
+                <button type="button" class="tf-btn active" data-unit="years">Years</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ECB €STR Simulator Card (Matches EuroYen Simulator style) -->
+        <div class="card">
+          <div class="sim-controls">
+            <div class="sim-top">
+              <div>
+                <div class="eyebrow" style="margin-bottom: 6px;">ECB €STR Rate Scenario</div>
+                <div class="preset-row">
+                  <button type="button" class="chip-btn" id="btn-estr-minus">−25 bps</button>
+                  <button type="button" class="chip-btn" id="btn-estr-plus">+25 bps</button>
+                  <button type="button" class="chip-btn" id="btn-sync-ecb">Sync Live ECB</button>
+                </div>
+              </div>
+              <label class="sim-rate-input-wrap">
+                <span>€STR =</span>
+                <input id="input-estr" type="number" inputmode="decimal" min="-1" max="10" step="0.001" value="2.437" />
+                <span>%</span>
+              </label>
+            </div>
+
+            <input id="slider-estr" type="range" min="0" max="6" step="0.025" value="2.437" aria-label="ECB ESTR rate slider" />
+
+            <div class="trajectory-bar">
+              <span class="eyebrow">Rate Path</span>
+              <div class="tf-group" id="trajectory-group" role="group" aria-label="Rate trajectory">
+                <button type="button" class="tf-btn active" data-mode="flat">Flat €STR</button>
+                <button type="button" class="tf-btn" data-mode="linear">Gradual Shift</button>
+              </div>
+            </div>
+
+            <div id="target-estr-box" class="target-estr-box hidden">
+              <div class="sim-top">
+                <div class="preset-row">
+                  <button type="button" class="chip-btn" id="btn-target-minus">−25 bps</button>
+                  <button type="button" class="chip-btn" id="btn-target-plus">+25 bps</button>
+                </div>
+                <label class="sim-rate-input-wrap">
+                  <span>End =</span>
+                  <input id="input-target-estr" type="number" inputmode="decimal" min="-1" max="10" step="0.05" value="2.00" />
+                  <span>%</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Taxation & Cost Breakdown Card -->
-        <div class="panel-card">
-          <div class="field-header">
-            <label for="input-tax" class="field-label">Capital Gains Tax</label>
-            <span id="tax-regime-label" class="field-hint">Gross (0%)</span>
+        <div class="card">
+          <div class="card-top">
+            <div>
+              <span class="eyebrow">Tax &amp; Costs</span>
+              <div class="card-sub" id="tax-regime-label">Gross (0%)</div>
+            </div>
+            <div class="tf-group" id="stamp-group" role="group" aria-label="Annual stamp duty">
+              <button type="button" class="tf-btn active" data-stamp="0">Bollo 0%</button>
+              <button type="button" class="tf-btn" data-stamp="0.20">0.20%</button>
+            </div>
           </div>
 
-          <div class="chip-row" id="chips-tax" role="group" aria-label="Tax rate presets">
-            <button type="button" class="chip active" data-tax="0" data-label="Gross (0%)">0% Gross</button>
-            <button type="button" class="chip" data-tax="12.94" data-label="IT White-list (~12.94%)">12.94% IT WL</button>
-            <button type="button" class="chip" data-tax="26" data-label="IT Standard (26%)">26% IT</button>
-            <button type="button" class="chip" data-tax="26.375" data-label="DE Abgeltung (26.38%)">26.38% DE</button>
-            <button type="button" class="chip" data-tax="custom" data-label="Custom Tax">Custom</button>
+          <div class="preset-row" id="chips-tax" role="group" aria-label="Capital gains tax presets">
+            <button type="button" class="chip-btn active" data-tax="0" data-label="Gross (0%)">0% Gross</button>
+            <button type="button" class="chip-btn" data-tax="12.94" data-label="IT White-list (~12.94%)">12.94% IT WL</button>
+            <button type="button" class="chip-btn" data-tax="26" data-label="IT Standard (26%)">26% IT</button>
+            <button type="button" class="chip-btn" data-tax="26.375" data-label="DE Abgeltung (26.38%)">26.38% DE</button>
+            <button type="button" class="chip-btn" data-tax="custom" data-label="Custom Tax">Custom</button>
           </div>
 
           <div id="custom-tax-row" class="custom-tax-row hidden">
-            <div class="input-wrapper compact">
-              <input id="input-tax" type="number" inputmode="decimal" min="0" max="60" step="0.1" value="0" aria-label="Custom capital gains tax percentage" />
-              <span class="input-suffix">%</span>
+            <label class="sim-rate-input-wrap compact">
+              <span>Tax</span>
+              <input id="input-tax" type="number" inputmode="decimal" min="0" max="60" step="0.1" value="0" aria-label="Custom tax percentage" />
+              <span>%</span>
+            </label>
+          </div>
+
+          <div class="sim-results">
+            <div class="sim-box">
+              <div class="sim-box-label">Gross Value</div>
+              <div class="sim-box-val" id="bd-gross-value">€10,248.72</div>
+            </div>
+            <div class="sim-box">
+              <div class="sim-box-label">TER + Tax + Bollo</div>
+              <div class="sim-box-val" id="bd-total-drag">−€10.12</div>
+            </div>
+            <div class="sim-box">
+              <div class="sim-box-label">Net Profit</div>
+              <div class="sim-box-val positive" id="bd-net-profit">+€248.72</div>
             </div>
           </div>
 
-          <div class="trajectory-row">
-            <span class="sub-label">Annual Stamp Duty (Bollo)</span>
-            <div class="segmented-control" id="stamp-group" role="group" aria-label="Annual stamp duty presets">
-              <button type="button" class="seg-btn active" data-stamp="0">0%</button>
-              <button type="button" class="seg-btn" data-stamp="0.20">0.20%</button>
-            </div>
+          <div class="realized-bar">
+            <span>TER (0.10%): <strong class="mono" id="bd-ter-cost">−€10.12</strong></span>
+            <span>Cap. Gains Tax: <strong class="mono" id="bd-tax-cost">€0.00</strong></span>
+            <span>Bollo &amp; Fees: <strong class="mono" id="bd-stamp-fee-cost">€0.00</strong></span>
           </div>
-
-          <div class="divider"></div>
-
-          <dl class="breakdown-list">
-            <div class="breakdown-row">
-              <dt>Gross Fund Value</dt>
-              <dd id="bd-gross-value">€10,248.72</dd>
-            </div>
-            <div class="breakdown-row">
-              <dt>Estimated TER Drag (0.10%)</dt>
-              <dd id="bd-ter-cost" class="muted">-€10.12</dd>
-            </div>
-            <div class="breakdown-row">
-              <dt>Capital Gains Tax</dt>
-              <dd id="bd-tax-cost" class="muted">€0.00</dd>
-            </div>
-            <div class="breakdown-row">
-              <dt>Stamp Duty &amp; Broker Fees</dt>
-              <dd id="bd-stamp-fee-cost" class="muted">€0.00</dd>
-            </div>
-            <div class="breakdown-row total">
-              <dt>Net Profit</dt>
-              <dd id="bd-net-profit" class="accent">+€248.72</dd>
-            </div>
-          </dl>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- TAB 2: PROJECTION & COMPARISON -->
-      <section id="panel-projection" class="tab-panel" aria-labelledby="nav-projection" hidden>
-        <div class="panel-card">
-          <div class="field-header">
-            <h2 class="section-heading">Compounded Growth Curve</h2>
-            <span id="chart-hover-info" class="field-hint">Tap chart to inspect</span>
+    <!-- Tab 2: Chart & Bank Comparison -->
+    <section class="panel" id="panel-projection">
+      <div class="stack">
+        <div class="card">
+          <div class="card-top">
+            <div class="chart-stats">
+              <span>Final <strong id="stat-final">€10,248.72</strong></span>
+              <span>Invested <strong id="stat-invested">€10,000</strong></span>
+              <span>Net Gain <strong id="stat-gain" style="color: var(--positive)">+€248.72</strong></span>
+            </div>
+            <span class="badge" id="chart-hover-info">Tap chart</span>
           </div>
 
-          <div class="chart-container" id="chart-container">
-            <svg id="growth-chart" viewBox="0 0 360 200" preserveAspectRatio="none" role="img" aria-label="XEON portfolio growth projection chart"></svg>
+          <div class="chart-wrap" id="chart-container">
+            <svg id="growth-chart" viewBox="0 0 640 240" preserveAspectRatio="none" role="img" aria-label="XEON compounded growth chart"></svg>
             <div id="chart-tooltip" class="chart-tooltip hidden"></div>
           </div>
 
           <div class="chart-legend">
             <span class="legend-item"><span class="legend-swatch swatch-net"></span>XEON Net</span>
-            <span class="legend-item"><span class="legend-swatch swatch-principal"></span>Invested</span>
             <span class="legend-item"><span class="legend-swatch swatch-bank"></span>Bank Deposit</span>
+            <span class="legend-item"><span class="legend-swatch swatch-principal"></span>Principal</span>
           </div>
         </div>
 
-        <!-- Comparison vs Bank Deposit / Idle Cash -->
-        <div class="panel-card">
-          <h2 class="section-heading">XEON vs. Bank Alternatives</h2>
-
-          <div class="compare-inputs">
-            <div class="compare-field">
-              <label for="input-bank-gross" class="sub-label">Bank Gross APY</label>
-              <div class="input-wrapper compact">
+        <div class="card">
+          <div class="card-top">
+            <span class="eyebrow">XEON vs. Bank Deposit</span>
+            <div class="compare-inputs-inline">
+              <label class="sim-rate-input-wrap compact">
+                <span>Bank</span>
                 <input id="input-bank-gross" type="number" inputmode="decimal" min="0" max="15" step="0.1" value="2.50" />
-                <span class="input-suffix">%</span>
-              </div>
-            </div>
-            <div class="compare-field">
-              <label for="input-bank-tax" class="sub-label">Bank Tax</label>
-              <div class="input-wrapper compact">
+                <span>%</span>
+              </label>
+              <label class="sim-rate-input-wrap compact">
+                <span>Tax</span>
                 <input id="input-bank-tax" type="number" inputmode="decimal" min="0" max="60" step="0.5" value="26" />
-                <span class="input-suffix">%</span>
-              </div>
+                <span>%</span>
+              </label>
             </div>
           </div>
 
@@ -328,221 +351,168 @@
             <div class="compare-item">
               <div class="compare-row-top">
                 <span>XEON ETF (Net)</span>
-                <strong id="cmp-xeon-profit" class="accent">+€248.72</strong>
+                <strong class="mono positive-text" id="cmp-xeon-profit">+€248.72</strong>
               </div>
-              <div class="bar-track"><div id="bar-xeon" class="bar-fill emerald" style="width: 100%"></div></div>
+              <div class="bar-track"><div id="bar-xeon" class="bar-fill sky" style="width: 100%"></div></div>
             </div>
 
             <div class="compare-item">
               <div class="compare-row-top">
                 <span>Bank Deposit (Net)</span>
-                <strong id="cmp-bank-profit">+€185.00</strong>
+                <strong class="mono" id="cmp-bank-profit">+€185.00</strong>
               </div>
-              <div class="bar-track"><div id="bar-bank" class="bar-fill slate" style="width: 74%"></div></div>
+              <div class="bar-track"><div id="bar-bank" class="bar-fill emerald" style="width: 74%"></div></div>
             </div>
 
             <div class="compare-item">
               <div class="compare-row-top">
                 <span>0% Checking Account</span>
-                <strong class="muted">€0.00</strong>
+                <strong class="mono muted-text">€0.00</strong>
               </div>
               <div class="bar-track"><div class="bar-fill muted" style="width: 2%"></div></div>
             </div>
           </div>
 
-          <p id="cmp-verdict" class="compare-verdict"></p>
+          <div class="realized-bar" id="cmp-verdict"></div>
         </div>
+      </div>
+    </section>
 
-        <!-- Milestone Schedule Table -->
-        <div class="panel-card">
-          <div class="field-header">
-            <h2 class="section-heading">Milestone Schedule</h2>
-            <span class="field-hint">Periodic net estimates</span>
+    <!-- Tab 3: Schedule & ETF Info -->
+    <section class="panel" id="panel-info">
+      <div class="stack">
+        <div class="card">
+          <div class="card-top">
+            <span class="eyebrow">Milestone Schedule</span>
+            <span class="badge mono" id="schedule-count-badge">12 periods</span>
           </div>
+
           <div class="table-scroll">
-            <table class="schedule-table">
+            <table>
               <thead>
                 <tr>
                   <th>Date</th>
+                  <th>Day</th>
                   <th>Invested</th>
+                  <th>Gross Value</th>
                   <th>Net Value</th>
-                  <th>Net Gain</th>
+                  <th style="text-align: right;">Net Gain</th>
                 </tr>
               </thead>
               <tbody id="schedule-tbody"></tbody>
             </table>
           </div>
         </div>
-      </section>
 
-      <!-- TAB 3: ETF INFO & ANDROID INSTALL -->
-      <section id="panel-info" class="tab-panel" aria-labelledby="nav-info" hidden>
-        <div class="panel-card">
-          <h2 class="section-heading">About XEON ETF</h2>
-          <p class="info-lead">
-            <strong>Xtrackers II EUR Overnight Rate Swap UCITS ETF 1C</strong> tracks the
-            <strong>Solactive €STR +8.5 Daily Total Return Index</strong>, providing money-market cash returns in EUR with daily compounding and zero duration risk.
-          </p>
+        <div class="card">
+          <div class="card-top">
+            <span class="eyebrow">XEON Methodology &amp; Factsheet</span>
+            <span class="badge accent mono">ACT/360</span>
+          </div>
 
-          <dl class="breakdown-list">
-            <div class="breakdown-row">
-              <dt>Ticker / ISIN</dt>
-              <dd class="mono">XEON · LU0290358497</dd>
-            </div>
-            <div class="breakdown-row">
-              <dt>Benchmark Index</dt>
-              <dd>Solactive €STR +8.5 Daily</dd>
-            </div>
-            <div class="breakdown-row">
-              <dt>Total Expense Ratio</dt>
-              <dd class="mono">0.10% p.a.</dd>
-            </div>
-            <div class="breakdown-row">
-              <dt>Distribution</dt>
-              <dd>Accumulating (1C)</dd>
-            </div>
-            <div class="breakdown-row">
-              <dt>Replication</dt>
-              <dd>Synthetic (Unfunded Swap)</dd>
-            </div>
-            <div class="breakdown-row">
-              <dt>Day-Count Basis</dt>
-              <dd class="mono">ACT/360 (€STR std)</dd>
-            </div>
-          </dl>
-        </div>
-
-        <div class="panel-card">
-          <h2 class="section-heading">Yield Formula</h2>
           <p class="info-text">
-            Each calendar day, the fund accrues interest at the ECB Euro Short-Term Rate (€STR) plus <strong>8.5 bps</strong> (`0.085%`) on an ACT/360 money-market basis, minus the <strong>0.10%</strong> annual TER (ACT/365):
+            <strong>Xtrackers II EUR Overnight Rate Swap UCITS ETF 1C</strong> (<span class="mono">LU0290358497</span>) tracks the <strong>Solactive €STR +8.5 Daily Total Return Index</strong>, compounding daily at <span class="mono">€STR + 0.085%</span> on an ACT/360 money-market basis minus the <span class="mono">0.10%</span> annual TER.
           </p>
+
           <pre class="formula-box">r_day = (€STR + 0.085%) / 360 − (TER / 365)
-V_end = V_0 × ∏(1 + r_day) − Tax − StampDuty − Fees</pre>
-          <p class="info-note">
-            <strong>Tax note:</strong> In Italy, because XEON's collateral basket is predominantly composed of EU white-list government bonds, capital gains are typically taxed at a blended effective rate near <strong>~12.94%–13.5%</strong> instead of 26%, depending on the semi-annual white-list ratio published by the broker.
-          </p>
+V_end = V_0 × ∏(1 + r_day) − Tax − Bollo − Fees</pre>
+
+          <div class="realized-bar">
+            <span>Replication: <strong class="mono">Synthetic Swap</strong></span>
+            <span>Policy: <strong class="mono">Accumulating</strong></span>
+            <span>IT White-list: <strong class="mono">~12.94%</strong></span>
+          </div>
+
+          <div class="install-box">
+            <button id="btn-info-install" class="btn btn-primary" type="button">Install Android PWA</button>
+            <span class="info-sub">Or Chrome ⋮ menu → Add to Home screen</span>
+          </div>
         </div>
-
-        <div class="panel-card">
-          <h2 class="section-heading">Install on Android</h2>
-          <p class="info-text">
-            This app is a standalone Android Progressive Web App (PWA) with offline caching.
-          </p>
-          <button id="btn-info-install" class="btn-primary-full" type="button">Install App to Home Screen</button>
-          <ol class="install-steps">
-            <li>Open this page in <strong>Google Chrome</strong> on Android.</li>
-            <li>Tap the <strong>Install</strong> button above or open Chrome's <strong>⋮ menu</strong>.</li>
-            <li>Select <strong>Add to Home screen</strong> → <strong>Install</strong>.</li>
-          </ol>
-        </div>
-      </section>
-    </main>
-
-    <!-- Bottom Navigation Bar (Android Ergonomics) -->
-    <nav class="bottom-nav" aria-label="Primary navigation">
-      <button id="nav-estimate" class="nav-item active" type="button" data-tab="estimate">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="4" y="2" width="16" height="20" rx="2"></rect>
-          <line x1="8" y1="6" x2="16" y2="6"></line>
-          <line x1="16" y1="14" x2="16" y2="18"></line>
-          <path d="M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01"></path>
-        </svg>
-        <span>Estimate</span>
-      </button>
-
-      <button id="nav-projection" class="nav-item" type="button" data-tab="projection">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M3 3v18h18"></path>
-          <path d="m19 9-5 5-4-4-3 3"></path>
-        </svg>
-        <span>Projection</span>
-      </button>
-
-      <button id="nav-info" class="nav-item" type="button" data-tab="info">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"></circle>
-          <path d="M12 16v-4M12 8h.01"></path>
-        </svg>
-        <span>XEON Info</span>
-      </button>
-    </nav>
+      </div>
+    </section>
   </div>
 
-  <!-- Advanced ETF & Broker Settings Bottom Sheet -->
-  <div id="settings-backdrop" class="sheet-backdrop hidden" aria-hidden="true">
-    <div id="settings-sheet" class="bottom-sheet" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-      <div class="sheet-handle"></div>
-      <div class="sheet-header">
-        <h2 id="settings-title" class="section-heading">ETF &amp; Cost Parameters</h2>
-        <button id="btn-close-settings" class="btn-ghost-sm" type="button">Done</button>
+  <!-- Mobile Bottom Navigation (Android) -->
+  <nav class="mobile-nav" aria-label="Mobile sections">
+    <button type="button" class="mob-btn active" data-tab="estimate">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="4" y="2" width="16" height="20" rx="2" />
+        <path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h2v4h-2zM8 18h.01M12 18h.01" />
+      </svg>
+      <span>Estimate</span>
+    </button>
+    <button type="button" class="mob-btn" data-tab="projection">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 3v18h18M18 9l-5 5-4-4-6 6" />
+      </svg>
+      <span>Chart</span>
+    </button>
+    <button type="button" class="mob-btn" data-tab="info">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+      </svg>
+      <span>Schedule</span>
+    </button>
+  </nav>
+
+  <!-- Modal: ETF & Cost Parameters -->
+  <div class="modal-backdrop" id="settings-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="modal-head">
+        <h2 id="settings-title">ETF &amp; Cost Parameters</h2>
+        <button type="button" class="icon-btn" id="btn-close-settings" aria-label="Close settings">
+          <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" /></svg>
+        </button>
       </div>
 
-      <div class="sheet-body">
-        <div class="sheet-grid">
-          <div class="field-group">
-            <label for="input-spread-bps" class="sub-label">Index Spread (bps)</label>
-            <div class="input-wrapper compact">
-              <input id="input-spread-bps" type="number" inputmode="decimal" step="0.5" value="8.5" />
-              <span class="input-suffix">bps</span>
-            </div>
-          </div>
-
-          <div class="field-group">
-            <label for="input-ter" class="sub-label">Fund TER (%)</label>
-            <div class="input-wrapper compact">
-              <input id="input-ter" type="number" inputmode="decimal" min="0" max="2" step="0.01" value="0.10" />
-              <span class="input-suffix">%</span>
-            </div>
-          </div>
-
-          <div class="field-group">
-            <label for="input-tracking-bps" class="sub-label">Tracking Adj. (bps)</label>
-            <div class="input-wrapper compact">
-              <input id="input-tracking-bps" type="number" inputmode="decimal" step="0.5" value="0" />
-              <span class="input-suffix">bps</span>
-            </div>
-          </div>
-
-          <div class="field-group">
-            <label for="input-stamp-custom" class="sub-label">Stamp Duty (% p.a.)</label>
-            <div class="input-wrapper compact">
-              <input id="input-stamp-custom" type="number" inputmode="decimal" min="0" max="5" step="0.05" value="0" />
-              <span class="input-suffix">%</span>
-            </div>
-          </div>
-
-          <div class="field-group">
-            <label for="input-buy-fee" class="sub-label">Buy Commission (€)</label>
-            <div class="input-wrapper compact">
-              <span class="input-prefix">€</span>
-              <input id="input-buy-fee" type="number" inputmode="decimal" min="0" step="0.5" value="0" />
-            </div>
-          </div>
-
-          <div class="field-group">
-            <label for="input-sell-fee" class="sub-label">Sell Commission (€)</label>
-            <div class="input-wrapper compact">
-              <span class="input-prefix">€</span>
-              <input id="input-sell-fee" type="number" inputmode="decimal" min="0" step="0.5" value="0" />
-            </div>
-          </div>
+      <div class="modal-grid">
+        <div class="field">
+          <label for="input-spread-bps">Index Spread (bps)</label>
+          <input id="input-spread-bps" type="number" inputmode="decimal" step="0.5" value="8.5" />
         </div>
 
-        <div class="trajectory-row">
-          <span class="sub-label">Day-Count Convention</span>
-          <div class="segmented-control" id="daycount-group" role="group" aria-label="Day count convention">
-            <button type="button" class="seg-btn active" data-basis="360">ACT/360</button>
-            <button type="button" class="seg-btn" data-basis="365">ACT/365</button>
-          </div>
+        <div class="field">
+          <label for="input-ter">Fund TER (%)</label>
+          <input id="input-ter" type="number" inputmode="decimal" min="0" max="2" step="0.01" value="0.10" />
         </div>
 
-        <button id="btn-reset-defaults" class="btn-outline-full" type="button">Reset All to XEON Defaults</button>
+        <div class="field">
+          <label for="input-tracking-bps">Tracking Adj. (bps)</label>
+          <input id="input-tracking-bps" type="number" inputmode="decimal" step="0.5" value="0" />
+        </div>
+
+        <div class="field">
+          <label for="input-stamp-custom">Stamp Duty (% p.a.)</label>
+          <input id="input-stamp-custom" type="number" inputmode="decimal" min="0" max="5" step="0.05" value="0" />
+        </div>
+
+        <div class="field">
+          <label for="input-buy-fee">Buy Commission (€)</label>
+          <input id="input-buy-fee" type="number" inputmode="decimal" min="0" step="0.5" value="0" />
+        </div>
+
+        <div class="field">
+          <label for="input-sell-fee">Sell Commission (€)</label>
+          <input id="input-sell-fee" type="number" inputmode="decimal" min="0" step="0.5" value="0" />
+        </div>
+      </div>
+
+      <div class="trajectory-bar" style="margin-top: 14px;">
+        <span class="eyebrow">Day-Count Basis</span>
+        <div class="tf-group" id="daycount-group" role="group" aria-label="Day count convention">
+          <button type="button" class="tf-btn active" data-basis="360">ACT/360</button>
+          <button type="button" class="tf-btn" data-basis="365">ACT/365</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button id="btn-reset-defaults" class="btn" type="button">Reset Defaults</button>
+        <button id="btn-done-settings" class="btn btn-primary" type="button">Done</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification -->
+  <!-- Toast -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
   <script type="module" src="./app.js"></script>

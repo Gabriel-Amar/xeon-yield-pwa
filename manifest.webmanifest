@@ -1,14 +1,14 @@
 {
   "id": "./",
-  "name": "XEON Yield — ETF Estimator",
-  "short_name": "XEON Yield",
-  "description": "Estimate daily compounded net and gross yield for the Xtrackers II EUR Overnight Rate Swap UCITS ETF (XEON) with live ECB €STR sync, rate scenarios, and tax presets.",
+  "name": "XEON / EUR — Yield Estimator",
+  "short_name": "XEON / EUR",
+  "description": "Clean XEON ETF daily-compounded yield estimator with live ECB €STR sync, rate trajectories, tax presets, and growth charts.",
   "start_url": "./?source=pwa",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#0D1311",
-  "theme_color": "#0E3527",
+  "background_color": "#0b0e11",
+  "theme_color": "#0b0e11",
   "lang": "en",
   "dir": "ltr",
   "categories": ["finance", "utilities"],
@@ -42,14 +42,14 @@
     {
       "name": "1 Year Estimate",
       "short_name": "1Y Yield",
-      "description": "Open XEON calculator set to a 1-year horizon",
+      "description": "Open XEON estimator set to a 1-year horizon",
       "url": "./?horizon=1y",
       "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Growth Projection",
-      "short_name": "Projection",
-      "description": "View compounding chart and bank comparison",
+      "name": "Projection Chart",
+      "short_name": "Chart",
+      "description": "View growth chart and bank comparison",
       "url": "./?tab=projection",
       "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
     }

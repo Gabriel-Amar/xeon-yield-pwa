@@ -39,10 +39,10 @@ function formatEur(num, signed = false) {
     maximumFractionDigits: 2,
   }).format(abs);
   if (!signed) {
-    return num < 0 ? `-€${formatted}` : `€${formatted}`;
+    return num < 0 ? `−€${formatted}` : `€${formatted}`;
   }
   if (num > 0.004) return `+€${formatted}`;
-  if (num < -0.004) return `-€${formatted}`;
+  if (num < -0.004) return `−€${formatted}`;
   return `€${formatted}`;
 }
 
@@ -52,8 +52,9 @@ function formatEurCompact(num) {
   }).format(num)}`;
 }
 
-function formatPct(num, digits = 2) {
-  return `${num.toFixed(digits)}%`;
+function formatPct(num, digits = 2, signed = false) {
+  const prefix = signed && num > 0 ? '+' : '';
+  return `${prefix}${num.toFixed(digits)}%`;
 }
 
 function formatDateShort(iso) {
@@ -77,29 +78,25 @@ function showToast(msg, durationMs = 2800) {
   }, durationMs);
 }
 
-// Theme Handling
+// Theme Handling (Dark default matching EuroYen-PAC)
 function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const isDark = theme === 'dark' || (theme === 'auto' && prefersDark);
-  el('icon-sun').classList.toggle('hidden', !isDark);
-  el('icon-moon').classList.toggle('hidden', isDark);
+  const resolved = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', resolved);
+  const metaTheme = el('meta-theme-color');
+  if (metaTheme) {
+    metaTheme.setAttribute('content', resolved === 'dark' ? '#0b0e11' : '#f6f7f9');
+  }
+  el('icon-sun').classList.toggle('hidden', resolved !== 'dark');
+  el('icon-moon').classList.toggle('hidden', resolved === 'dark');
 }
 
 function initTheme() {
-  const savedTheme = localStorage.getItem(THEME_KEY) || 'auto';
+  const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
   applyTheme(savedTheme);
 
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    const current = localStorage.getItem(THEME_KEY) || 'auto';
-    if (current === 'auto') applyTheme('auto');
-  });
-
   el('btn-theme-toggle').addEventListener('click', () => {
-    const current = document.documentElement.getAttribute('data-theme') || 'auto';
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const currentlyDark = current === 'dark' || (current === 'auto' && prefersDark);
-    const next = currentlyDark ? 'light' : 'dark';
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
     localStorage.setItem(THEME_KEY, next);
     applyTheme(next);
   });
@@ -112,13 +109,13 @@ function syncInputsFromState() {
   el('input-horizon-val').value = state.horizonValue;
   el('input-estr').value = Number(state.estrRatePct).toFixed(3);
   el('slider-estr').value = Math.min(6, Math.max(0, state.estrRatePct));
-  el('header-estr-value').textContent = `${Number(state.estrRatePct).toFixed(3)}%`;
+  el('hero-estr-val').textContent = Number(state.estrRatePct).toFixed(3);
   el('input-target-estr').value = Number(state.targetEstrPct).toFixed(2);
   el('input-tax').value = state.taxRatePct;
   el('input-bank-gross').value = state.bankCompareGrossPct;
   el('input-bank-tax').value = state.bankCompareTaxPct;
 
-  // Settings sheet fields
+  // Settings modal fields
   el('input-spread-bps').value = state.indexSpreadBps;
   el('input-ter').value = state.terPct;
   el('input-tracking-bps').value = state.trackingAdjBps;
@@ -126,46 +123,41 @@ function syncInputsFromState() {
   el('input-buy-fee').value = state.buyFee;
   el('input-sell-fee').value = state.sellFee;
 
+  el('hero-spread-meta').textContent = `+${Number(state.indexSpreadBps).toFixed(1)} bps − ${Number(state.terPct).toFixed(2)}% TER`;
+  el('rate-source-badge').textContent = `ECB · ${state.estrDate || 'Ref'}`;
+
   // Active chips: Initial
-  document.querySelectorAll('#chips-initial .chip').forEach((btn) => {
+  document.querySelectorAll('#chips-initial .chip-btn').forEach((btn) => {
     btn.classList.toggle('active', Number(btn.dataset.val) === Number(state.initialInvestment));
   });
 
   // Active chips: Monthly
-  document.querySelectorAll('#chips-monthly .chip').forEach((btn) => {
+  document.querySelectorAll('#chips-monthly .chip-btn').forEach((btn) => {
     btn.classList.toggle('active', Number(btn.dataset.val) === Number(state.monthlyContribution));
   });
 
-  // Active chips & segmented: Horizon
-  document.querySelectorAll('#chips-horizon .chip').forEach((btn) => {
+  // Active horizon buttons
+  document.querySelectorAll('#chips-horizon .tf-btn').forEach((btn) => {
     const match =
       Number(btn.dataset.val) === Number(state.horizonValue) &&
       btn.dataset.unit === state.horizonUnit;
     btn.classList.toggle('active', match);
   });
-  document.querySelectorAll('#horizon-unit-group .seg-btn').forEach((btn) => {
+  document.querySelectorAll('#horizon-unit-group .tf-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.unit === state.horizonUnit);
   });
 
-  const unitSingular = state.horizonUnit.slice(0, -1);
-  const unitLabel =
-    Number(state.horizonValue) === 1
-      ? unitSingular.charAt(0).toUpperCase() + unitSingular.slice(1)
-      : state.horizonUnit.charAt(0).toUpperCase() + state.horizonUnit.slice(1);
-  el('horizon-summary-text').textContent = `${state.horizonValue} ${unitLabel}`;
-
   // Trajectory mode
   const isLinear = state.rateTrajectory === 'linear';
-  document.querySelectorAll('#trajectory-group .seg-btn').forEach((btn) => {
+  document.querySelectorAll('#trajectory-group .tf-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.mode === state.rateTrajectory);
   });
   el('target-estr-box').classList.toggle('hidden', !isLinear);
-  el('target-estr-delta').textContent = `${Number(state.targetEstrPct).toFixed(3)}%`;
 
   // Tax presets
   const taxVal = Number(state.taxRatePct);
   let matchedTaxChip = false;
-  document.querySelectorAll('#chips-tax .chip').forEach((btn) => {
+  document.querySelectorAll('#chips-tax .chip-btn').forEach((btn) => {
     if (btn.dataset.tax === 'custom') return;
     const isMatch = Math.abs(Number(btn.dataset.tax) - taxVal) < 0.001;
     btn.classList.toggle('active', isMatch);
@@ -174,7 +166,7 @@ function syncInputsFromState() {
       el('tax-regime-label').textContent = btn.dataset.label;
     }
   });
-  const customTaxBtn = document.querySelector('#chips-tax .chip[data-tax="custom"]');
+  const customTaxBtn = document.querySelector('#chips-tax .chip-btn[data-tax="custom"]');
   const showCustomTax = !matchedTaxChip || customTaxBtn.dataset.forceOpen === '1';
   customTaxBtn.classList.toggle('active', showCustomTax && !matchedTaxChip);
   el('custom-tax-row').classList.toggle('hidden', !showCustomTax);
@@ -182,8 +174,8 @@ function syncInputsFromState() {
     el('tax-regime-label').textContent = `Custom (${taxVal.toFixed(2)}%)`;
   }
 
-  // Stamp duty segmented
-  document.querySelectorAll('#stamp-group .seg-btn').forEach((btn) => {
+  // Stamp duty
+  document.querySelectorAll('#stamp-group .tf-btn').forEach((btn) => {
     btn.classList.toggle(
       'active',
       Math.abs(Number(btn.dataset.stamp) - Number(state.stampDutyPct)) < 0.001
@@ -191,7 +183,7 @@ function syncInputsFromState() {
   });
 
   // Day-count convention
-  document.querySelectorAll('#daycount-group .seg-btn').forEach((btn) => {
+  document.querySelectorAll('#daycount-group .tf-btn').forEach((btn) => {
     btn.classList.toggle('active', Number(btn.dataset.basis) === Number(state.dayCountBasis));
   });
 }
@@ -199,32 +191,54 @@ function syncInputsFromState() {
 function recalculateAndRender() {
   lastResult = calculateXeonYield(state);
 
-  // Hero card
-  el('hero-horizon-badge').textContent = `${lastResult.totalDays} days · ${formatDateShort(lastResult.endDate)}`;
-  el('res-net-value').textContent = formatEur(lastResult.netFinalValue);
-
-  const deltaEl = el('res-net-profit');
-  deltaEl.textContent = formatEur(lastResult.netProfit, true);
-  deltaEl.classList.toggle('positive', lastResult.netProfit >= 0);
-  deltaEl.classList.toggle('negative', lastResult.netProfit < 0);
-
-  el('res-net-apy').textContent = formatPct(lastResult.netApyPct);
+  // Hero Card 1: Rate
   el('res-gross-apy').textContent = formatPct(lastResult.grossApyPct);
-  el('res-monthly-avg').textContent = formatEur(lastResult.avgMonthlyNetProfit, true);
-  el('res-daily-avg').textContent = formatEur(lastResult.avgDailyNetProfit, true);
 
-  el('label-total-invested').textContent = `Total invested: ${formatEurCompact(lastResult.totalCashInvested)}`;
+  // Hero Card 2: Profit & Value
+  const profitEl = el('res-net-profit');
+  profitEl.textContent = formatEur(lastResult.netProfit, true);
+  profitEl.classList.toggle('positive', lastResult.netProfit >= 0);
+  profitEl.classList.toggle('negative', lastResult.netProfit < 0);
+
+  const roiBadge = el('hero-roi-badge');
+  roiBadge.textContent = formatPct(lastResult.netTotalReturnPct, 2, true);
+  roiBadge.classList.toggle('positive', lastResult.netTotalReturnPct >= 0);
+  roiBadge.classList.toggle('negative', lastResult.netTotalReturnPct < 0);
+
+  el('res-net-value').textContent = formatEur(lastResult.netFinalValue);
+  el('label-total-invested').textContent = formatEurCompact(lastResult.totalCashInvested);
+  el('res-net-apy').textContent = formatPct(lastResult.netApyPct);
+  el('res-daily-avg').textContent = formatEur(lastResult.avgDailyNetProfit, true);
+  el('hero-horizon-badge').textContent = `${lastResult.totalDays}d · ${formatDateShort(lastResult.endDate)}`;
+
+  const unitSingular = state.horizonUnit.slice(0, -1);
+  const unitLabel =
+    Number(state.horizonValue) === 1
+      ? unitSingular.charAt(0).toUpperCase() + unitSingular.slice(1)
+      : state.horizonUnit.charAt(0).toUpperCase() + state.horizonUnit.slice(1);
+  el('horizon-summary-text').innerHTML = `${state.horizonValue} ${unitLabel} · Monthly avg <strong class="mono">${formatEur(lastResult.avgMonthlyNetProfit, true)}</strong>`;
 
   // Breakdown card
   el('bd-gross-value').textContent = formatEur(lastResult.grossValue);
-  el('bd-ter-cost').textContent = `-${formatEur(lastResult.terCostAccrued)}`;
+  el('bd-ter-cost').textContent = `−${formatEur(lastResult.terCostAccrued)}`;
   el('bd-tax-cost').textContent =
-    lastResult.capitalGainsTax > 0 ? `-${formatEur(lastResult.capitalGainsTax)}` : '€0.00';
+    lastResult.capitalGainsTax > 0 ? `−${formatEur(lastResult.capitalGainsTax)}` : '€0.00';
 
   const stampAndFees = lastResult.stampDuty + lastResult.brokerFees;
   el('bd-stamp-fee-cost').textContent =
-    stampAndFees > 0 ? `-${formatEur(stampAndFees)}` : '€0.00';
-  el('bd-net-profit').textContent = formatEur(lastResult.netProfit, true);
+    stampAndFees > 0 ? `−${formatEur(stampAndFees)}` : '€0.00';
+
+  const totalDrag = lastResult.terCostAccrued + lastResult.capitalGainsTax + stampAndFees;
+  el('bd-total-drag').textContent = `−${formatEur(totalDrag)}`;
+
+  const bdNetEl = el('bd-net-profit');
+  bdNetEl.textContent = formatEur(lastResult.netProfit, true);
+  bdNetEl.classList.toggle('positive', lastResult.netProfit >= 0);
+
+  // Chart header stats
+  el('stat-final').textContent = formatEur(lastResult.netFinalValue);
+  el('stat-invested').textContent = formatEurCompact(lastResult.totalCashInvested);
+  el('stat-gain').textContent = formatEur(lastResult.netProfit, true);
 
   // Comparison tab
   el('cmp-xeon-profit').textContent = formatEur(lastResult.netProfit, true);
@@ -238,14 +252,17 @@ function recalculateAndRender() {
 
   const adv = lastResult.advantageVsBank;
   if (adv >= 0.01) {
-    el('cmp-verdict').textContent =
-      `XEON yields ${formatEur(adv)} more net profit than the bank deposit, and ${formatEur(lastResult.advantageVsCash)} more than idle 0% cash.`;
+    el('cmp-verdict').innerHTML =
+      `<span>XEON advantage: <strong class="mono positive-text">+${formatEur(adv)}</strong> vs. Bank Deposit</span>` +
+      `<span>vs. 0% Cash: <strong class="mono positive-text">${formatEur(lastResult.advantageVsCash, true)}</strong></span>`;
   } else if (adv <= -0.01) {
-    el('cmp-verdict').textContent =
-      `The bank deposit yields ${formatEur(Math.abs(adv))} more than XEON under these rates & taxes (still ${formatEur(lastResult.advantageVsCash)} above 0% cash).`;
+    el('cmp-verdict').innerHTML =
+      `<span>Bank Deposit leads by <strong class="mono">${formatEur(Math.abs(adv))}</strong></span>` +
+      `<span>XEON vs. 0% Cash: <strong class="mono positive-text">${formatEur(lastResult.advantageVsCash, true)}</strong></span>`;
   } else {
-    el('cmp-verdict').textContent =
-      `XEON and the bank deposit produce virtually identical net returns over this horizon.`;
+    el('cmp-verdict').innerHTML =
+      `<span>XEON &amp; Bank Deposit yield virtually identically</span>` +
+      `<span>vs. 0% Cash: <strong class="mono positive-text">${formatEur(lastResult.advantageVsCash, true)}</strong></span>`;
   }
 
   renderChart(lastResult);
@@ -256,32 +273,35 @@ function recalculateAndRender() {
 function renderSchedule(res) {
   const tbody = el('schedule-tbody');
   tbody.innerHTML = '';
+  el('schedule-count-badge').textContent = `${res.schedule.length} periods`;
   const frag = document.createDocumentFragment();
   for (const row of res.schedule) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${formatDateShort(row.date)}</td>
-      <td>${formatEurCompact(row.invested)}</td>
-      <td>${formatEur(row.netValue)}</td>
-      <td class="${row.netProfit >= 0 ? 'accent' : ''}">${formatEur(row.netProfit, true)}</td>
+      <td class="mono">${row.day}d</td>
+      <td class="mono">${formatEurCompact(row.invested)}</td>
+      <td class="mono">${formatEur(row.grossValue)}</td>
+      <td class="mono">${formatEur(row.netValue)}</td>
+      <td class="mono ${row.netProfit >= 0 ? 'positive-text' : ''}" style="text-align:right;">${formatEur(row.netProfit, true)}</td>
     `;
     frag.appendChild(tr);
   }
   tbody.appendChild(frag);
 }
 
-// Interactive SVG Growth Chart
+// Interactive SVG Growth Chart (EuroYen-PAC sky-blue / emerald styling)
 function renderChart(res) {
   const svg = el('growth-chart');
   const pts = res.series;
   if (!pts || pts.length < 2) return;
 
-  const W = 360;
-  const H = 200;
-  const padL = 10;
-  const padR = 10;
-  const padT = 14;
-  const padB = 22;
+  const W = 640;
+  const H = 240;
+  const padL = 12;
+  const padR = 12;
+  const padT = 16;
+  const padB = 26;
   const plotW = W - padL - padR;
   const plotH = H - padT - padB;
 
@@ -311,12 +331,9 @@ function renderChart(res) {
 
   const netCoords = pts.map((p) => `${xOf(p.day).toFixed(1)},${yOf(p.netValue).toFixed(1)}`);
   const invCoords = pts.map((p) => `${xOf(p.day).toFixed(1)},${yOf(p.invested).toFixed(1)}`);
-
-  // Approximate bank curve between start and end
   const bankCoords = pts.map((p) => {
     const frac = p.day / maxDay;
-    const approxBank =
-      p.invested + (res.bankBalance - res.totalCashInvested) * frac;
+    const approxBank = p.invested + (res.bankBalance - res.totalCashInvested) * frac;
     return `${xOf(p.day).toFixed(1)},${yOf(approxBank).toFixed(1)}`;
   });
 
@@ -325,25 +342,33 @@ function renderChart(res) {
     pts.map((p) => `L ${xOf(p.day).toFixed(1)},${yOf(p.netValue).toFixed(1)}`).join(' ') +
     ` L ${xOf(pts[pts.length - 1].day).toFixed(1)},${(padT + plotH).toFixed(1)} Z`;
 
+  // Horizontal subtle grid lines (3 lines)
+  const gridLines = [0.25, 0.5, 0.75]
+    .map((f) => {
+      const gy = (padT + plotH * f).toFixed(1);
+      return `<line x1="${padL}" y1="${gy}" x2="${W - padR}" y2="${gy}" stroke="var(--chart-grid)" stroke-width="1" />`;
+    })
+    .join('');
+
   svg.innerHTML = `
     <defs>
       <linearGradient id="xeonAreaGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.28" />
-        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.02" />
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.22" />
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.00" />
       </linearGradient>
     </defs>
-    <line x1="${padL}" y1="${padT + plotH}" x2="${W - padR}" y2="${padT + plotH}" stroke="var(--border-subtle)" stroke-width="1" />
+    ${gridLines}
+    <line x1="${padL}" y1="${padT + plotH}" x2="${W - padR}" y2="${padT + plotH}" stroke="var(--border)" stroke-width="1" />
     <path d="${areaPath}" fill="url(#xeonAreaGrad)" />
-    <polyline points="${invCoords.join(' ')}" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-dasharray="4 4" />
-    <polyline points="${bankCoords.join(' ')}" fill="none" stroke="var(--slate-line)" stroke-width="1.8" />
+    <polyline points="${invCoords.join(' ')}" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-dasharray="5 5" />
+    <polyline points="${bankCoords.join(' ')}" fill="none" stroke="var(--positive)" stroke-width="1.8" stroke-opacity="0.85" />
     <polyline points="${netCoords.join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
-    <line id="chart-crosshair" x1="0" y1="${padT}" x2="0" y2="${padT + plotH}" stroke="var(--text-secondary)" stroke-width="1" stroke-dasharray="2 2" opacity="0" />
-    <circle id="chart-dot" cx="0" cy="0" r="4.5" fill="var(--accent)" stroke="var(--bg-surface)" stroke-width="2" opacity="0" />
-    <text x="${padL}" y="${H - 4}" fill="var(--text-muted)" font-size="10" font-family="var(--font-mono)">${formatDateShort(pts[0].date)}</text>
-    <text x="${W - padR}" y="${H - 4}" fill="var(--text-muted)" font-size="10" font-family="var(--font-mono)" text-anchor="end">${formatDateShort(pts[pts.length - 1].date)}</text>
+    <line id="chart-crosshair" x1="0" y1="${padT}" x2="0" y2="${padT + plotH}" stroke="var(--text-secondary)" stroke-width="1" stroke-dasharray="3 3" opacity="0" />
+    <circle id="chart-dot" cx="0" cy="0" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2" opacity="0" />
+    <text x="${padL}" y="${H - 5}" fill="var(--text-muted)" font-size="11" font-family="var(--font-mono)">${formatDateShort(pts[0].date)}</text>
+    <text x="${W - padR}" y="${H - 5}" fill="var(--text-muted)" font-size="11" font-family="var(--font-mono)" text-anchor="end">${formatDateShort(pts[pts.length - 1].date)}</text>
   `;
 
-  // Pointer scrubbing
   const container = el('chart-container');
   const tooltip = el('chart-tooltip');
 
@@ -370,7 +395,7 @@ function renderChart(res) {
     if (crosshair && dot) {
       crosshair.setAttribute('x1', cx.toFixed(1));
       crosshair.setAttribute('x2', cx.toFixed(1));
-      crosshair.setAttribute('opacity', '0.8');
+      crosshair.setAttribute('opacity', '0.85');
       dot.setAttribute('cx', cx.toFixed(1));
       dot.setAttribute('cy', cy.toFixed(1));
       dot.setAttribute('opacity', '1');
@@ -378,7 +403,7 @@ function renderChart(res) {
 
     tooltip.classList.remove('hidden');
     tooltip.innerHTML =
-      `<div>${formatDateShort(nearest.date)} (Day ${nearest.day})</div>` +
+      `<div>${formatDateShort(nearest.date)} · Day ${nearest.day}</div>` +
       `<div>Net: <strong>${formatEur(nearest.netValue)}</strong></div>` +
       `<div>€STR: ${nearest.estrPct.toFixed(3)}%</div>`;
     el('chart-hover-info').textContent = formatEur(nearest.netValue);
@@ -390,7 +415,7 @@ function renderChart(res) {
     if (crosshair) crosshair.setAttribute('opacity', '0');
     if (dot) dot.setAttribute('opacity', '0');
     tooltip.classList.add('hidden');
-    el('chart-hover-info').textContent = 'Tap chart to inspect';
+    el('chart-hover-info').textContent = 'Tap chart';
   };
 
   container.onpointerdown = (e) => inspectAt(e.clientX);
@@ -404,10 +429,10 @@ function renderChart(res) {
 
 // Live ECB €STR Sync
 async function syncEcbEstr() {
-  const dot = el('sync-status-dot');
-  const label = el('sync-status-label');
-  dot.classList.add('loading');
-  label.textContent = 'Fetching ECB…';
+  const topBtn = el('btn-sync-estr-top');
+  const syncBtn = el('btn-sync-ecb');
+  topBtn.classList.add('is-loading');
+  syncBtn.textContent = 'Syncing…';
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5500);
@@ -420,7 +445,6 @@ async function syncEcbEstr() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
-    // Parse SDMX-JSON structure
     const seriesObj = data?.dataSets?.[0]?.series;
     const firstKey = seriesObj ? Object.keys(seriesObj)[0] : null;
     const obsObj = firstKey ? seriesObj[firstKey]?.observations : null;
@@ -439,25 +463,22 @@ async function syncEcbEstr() {
     syncInputsFromState();
     recalculateAndRender();
 
-    label.textContent = `ECB (${obsDate})`;
-    showToast(`Synced live €STR: ${state.estrRatePct.toFixed(3)}% (${obsDate})`);
-  } catch (err) {
-    label.textContent = `Ref (${state.estrDate})`;
+    showToast(`Synced live ECB €STR: ${state.estrRatePct.toFixed(3)}% (${obsDate})`);
+  } catch {
     showToast(`Offline or ECB unreachable — using €STR ${Number(state.estrRatePct).toFixed(3)}%`);
   } finally {
     clearTimeout(timeout);
-    dot.classList.remove('loading');
+    topBtn.classList.remove('is-loading');
+    syncBtn.textContent = 'Sync Live ECB';
   }
 }
 
-// Navigation Tabs
+// Navigation Tabs (syncs both desktop .seg-nav and mobile .mobile-nav)
 function switchTab(tabName) {
-  document.querySelectorAll('.tab-panel').forEach((panel) => {
-    const active = panel.id === `panel-${tabName}`;
-    panel.classList.toggle('active', active);
-    panel.hidden = !active;
+  document.querySelectorAll('.panel').forEach((panel) => {
+    panel.classList.toggle('active', panel.id === `panel-${tabName}`);
   });
-  document.querySelectorAll('.bottom-nav .nav-item').forEach((btn) => {
+  document.querySelectorAll('.seg-nav .seg-btn, .mobile-nav .mob-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.tab === tabName);
   });
   if (tabName === 'projection' && lastResult) {
@@ -466,33 +487,33 @@ function switchTab(tabName) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Bottom Sheet Modal
+// Settings Modal
 function openSettings() {
-  el('settings-backdrop').classList.remove('hidden');
+  el('settings-backdrop').classList.add('open');
   el('settings-backdrop').setAttribute('aria-hidden', 'false');
 }
 
 function closeSettings() {
-  el('settings-backdrop').classList.add('hidden');
+  el('settings-backdrop').classList.remove('open');
   el('settings-backdrop').setAttribute('aria-hidden', 'true');
 }
 
 function bindEvents() {
   // Navigation
-  document.querySelectorAll('.bottom-nav .nav-item').forEach((btn) => {
+  document.querySelectorAll('.seg-nav .seg-btn, .mobile-nav .mob-btn').forEach((btn) => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
   // Initial investment
   el('input-initial').addEventListener('input', (e) => {
     state.initialInvestment = Math.max(0, Number(e.target.value) || 0);
-    document.querySelectorAll('#chips-initial .chip').forEach((btn) => {
+    document.querySelectorAll('#chips-initial .chip-btn').forEach((btn) => {
       btn.classList.toggle('active', Number(btn.dataset.val) === state.initialInvestment);
     });
     recalculateAndRender();
   });
 
-  document.querySelectorAll('#chips-initial .chip').forEach((btn) => {
+  document.querySelectorAll('#chips-initial .chip-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.initialInvestment = Number(btn.dataset.val);
       syncInputsFromState();
@@ -503,13 +524,13 @@ function bindEvents() {
   // Monthly PAC
   el('input-monthly').addEventListener('input', (e) => {
     state.monthlyContribution = Math.max(0, Number(e.target.value) || 0);
-    document.querySelectorAll('#chips-monthly .chip').forEach((btn) => {
+    document.querySelectorAll('#chips-monthly .chip-btn').forEach((btn) => {
       btn.classList.toggle('active', Number(btn.dataset.val) === state.monthlyContribution);
     });
     recalculateAndRender();
   });
 
-  document.querySelectorAll('#chips-monthly .chip').forEach((btn) => {
+  document.querySelectorAll('#chips-monthly .chip-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.monthlyContribution = Number(btn.dataset.val);
       syncInputsFromState();
@@ -518,7 +539,7 @@ function bindEvents() {
   });
 
   // Horizon
-  document.querySelectorAll('#chips-horizon .chip').forEach((btn) => {
+  document.querySelectorAll('#chips-horizon .tf-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.horizonValue = Number(btn.dataset.val);
       state.horizonUnit = btn.dataset.unit;
@@ -533,7 +554,7 @@ function bindEvents() {
     recalculateAndRender();
   });
 
-  document.querySelectorAll('#horizon-unit-group .seg-btn').forEach((btn) => {
+  document.querySelectorAll('#horizon-unit-group .tf-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.horizonUnit = btn.dataset.unit;
       syncInputsFromState();
@@ -541,13 +562,13 @@ function bindEvents() {
     });
   });
 
-  // €STR rate controls
+  // €STR controls
   el('input-estr').addEventListener('input', (e) => {
     const val = Number(e.target.value);
     if (Number.isFinite(val)) {
       state.estrRatePct = Math.max(-1, Math.min(10, val));
       el('slider-estr').value = Math.min(6, Math.max(0, state.estrRatePct));
-      el('header-estr-value').textContent = `${state.estrRatePct.toFixed(3)}%`;
+      el('hero-estr-val').textContent = state.estrRatePct.toFixed(3);
       recalculateAndRender();
     }
   });
@@ -555,7 +576,7 @@ function bindEvents() {
   el('slider-estr').addEventListener('input', (e) => {
     state.estrRatePct = Number(e.target.value);
     el('input-estr').value = state.estrRatePct.toFixed(3);
-    el('header-estr-value').textContent = `${state.estrRatePct.toFixed(3)}%`;
+    el('hero-estr-val').textContent = state.estrRatePct.toFixed(3);
     recalculateAndRender();
   });
 
@@ -571,8 +592,8 @@ function bindEvents() {
     recalculateAndRender();
   });
 
-  // Rate trajectory
-  document.querySelectorAll('#trajectory-group .seg-btn').forEach((btn) => {
+  // Trajectory
+  document.querySelectorAll('#trajectory-group .tf-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.rateTrajectory = btn.dataset.mode;
       syncInputsFromState();
@@ -584,7 +605,6 @@ function bindEvents() {
     const val = Number(e.target.value);
     if (Number.isFinite(val)) {
       state.targetEstrPct = Math.max(-1, Math.min(10, val));
-      el('target-estr-delta').textContent = `${state.targetEstrPct.toFixed(3)}%`;
       recalculateAndRender();
     }
   });
@@ -601,14 +621,14 @@ function bindEvents() {
     recalculateAndRender();
   });
 
-  // Sync ECB buttons
+  // ECB Sync
   el('btn-sync-ecb').addEventListener('click', syncEcbEstr);
   el('btn-sync-estr-top').addEventListener('click', syncEcbEstr);
 
   // Tax presets
-  document.querySelectorAll('#chips-tax .chip').forEach((btn) => {
+  document.querySelectorAll('#chips-tax .chip-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const customBtn = document.querySelector('#chips-tax .chip[data-tax="custom"]');
+      const customBtn = document.querySelector('#chips-tax .chip-btn[data-tax="custom"]');
       if (btn.dataset.tax === 'custom') {
         customBtn.dataset.forceOpen = '1';
         el('custom-tax-row').classList.remove('hidden');
@@ -628,8 +648,8 @@ function bindEvents() {
     recalculateAndRender();
   });
 
-  // Stamp duty segmented
-  document.querySelectorAll('#stamp-group .seg-btn').forEach((btn) => {
+  // Stamp duty
+  document.querySelectorAll('#stamp-group .tf-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.stampDutyPct = Number(btn.dataset.stamp);
       syncInputsFromState();
@@ -651,16 +671,19 @@ function bindEvents() {
   // Settings Modal
   el('btn-open-settings').addEventListener('click', openSettings);
   el('btn-close-settings').addEventListener('click', closeSettings);
+  el('btn-done-settings').addEventListener('click', closeSettings);
   el('settings-backdrop').addEventListener('click', (e) => {
     if (e.target === el('settings-backdrop')) closeSettings();
   });
 
   el('input-spread-bps').addEventListener('input', (e) => {
     state.indexSpreadBps = Number(e.target.value) || 0;
+    syncInputsFromState();
     recalculateAndRender();
   });
   el('input-ter').addEventListener('input', (e) => {
     state.terPct = Math.max(0, Number(e.target.value) || 0);
+    syncInputsFromState();
     recalculateAndRender();
   });
   el('input-tracking-bps').addEventListener('input', (e) => {
@@ -681,7 +704,7 @@ function bindEvents() {
     recalculateAndRender();
   });
 
-  document.querySelectorAll('#daycount-group .seg-btn').forEach((btn) => {
+  document.querySelectorAll('#daycount-group .tf-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.dayCountBasis = Number(btn.dataset.basis);
       syncInputsFromState();
@@ -701,9 +724,7 @@ function bindEvents() {
 function initPwa() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').catch(() => {
-        // SW registration failed or unsupported in current context
-      });
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
     });
   }
 
@@ -720,7 +741,7 @@ function initPwa() {
       deferredInstallPrompt = null;
       el('install-banner').classList.add('hidden');
       if (outcome === 'accepted') {
-        showToast('XEON Yield installed to your home screen');
+        showToast('XEON / EUR installed to your home screen');
       }
     } else {
       showToast('In Chrome on Android, open ⋮ menu → Add to Home screen');
@@ -739,10 +760,9 @@ function initPwa() {
   });
 
   window.addEventListener('online', () => showToast('Back online'));
-  window.addEventListener('offline', () => showToast('Offline mode — all calculations work locally'));
+  window.addEventListener('offline', () => showToast('Offline mode — calculations work locally'));
 }
 
-// Handle Android Launcher Shortcut Query Params
 function handleLaunchParams() {
   const params = new URLSearchParams(window.location.search);
   const horizon = params.get('horizon');
@@ -757,7 +777,6 @@ function handleLaunchParams() {
   }
 }
 
-// Boot
 initTheme();
 handleLaunchParams();
 syncInputsFromState();
